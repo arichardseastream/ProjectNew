@@ -90,7 +90,9 @@ primer = """You are a helpful assistant.
             of SBA 504 historical data, and potentially create plots and other graphics.
             If you want to write a message, make sure to write code that writes the message to the streamlit.
             If and only if you are asked to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval.
-            Do not plot bars unless you are asked to."""
+            Do not plot bars unless you are asked to.
+            Do not train any machine learning models like xgboost, logistic regression, etc. under any circumstances.
+            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this."""
 
 # Additional primer to be ended at the end of the prompt
 prompt_addition = """"""
