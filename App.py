@@ -254,6 +254,7 @@ def display_user_guide():
     5. Plot the model vs actual CPR by Date
     6. Get the model and actual CPR curves by Incentive for when Date was in 2016 and when Date was in 2023. Round Incentive to the nearest
                 .25. Restrict to where Loan Age is between 60 and 84. Plot all four curves on the same graph.
+    7. Plot the model vs actual CPR by Loan Age for loans where “Dentist” is in the NaicsDescription. Round Loan Age to the nearest 6.
     """)
 
 # Submit query to gpt
