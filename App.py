@@ -89,7 +89,7 @@ primer = """You are a helpful assistant.
             If the user asks what you are able to do, write to the streamlit that you are able to transform natural language queries into python code that can be used to query a dataframe
             of SBA 504 historical data, and potentially create plots and other graphics.
             If you want to write a message, make sure to write code that writes the message to the streamlit.
-            If you are going to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval."""
+            If and only if you are asked to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval."""
 
 # Additional primer to be ended at the end of the prompt
 prompt_addition = """"""
