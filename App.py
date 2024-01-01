@@ -88,7 +88,6 @@ primer = """You are a helpful assistant.
             If you need to calculate the difference between two dates in months, do this directly using dt.year and dt.month.
             If the user asks what you are able to do, write to the streamlit that you are able to transform natural language queries into python code that can be used to query a dataframe
             of SBA 504 historical data, and potentially create plots and other graphics.
-            If the user asks why you sometimes print Retrying, write to the streamlit that it is because the initial scripts did not work and we are generating new scripts to try again.
             If you want to write a message, make sure to write code that writes the message to the streamlit.
             If you are going to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval."""
 
@@ -165,19 +164,19 @@ def display_chat(df, df_saved):
             max_attempts = 5
             attempts = 0
             success = False
+            
+            # Display assistant response in chat message container
+            with st.chat_message("assistant"):
 
-            # Keep trying until max attempts
-            while attempts < max_attempts and not success:
-                try:
-
-                    # Make a request to the OpenAI API
-                    response = make_api_call(full_prompt)
-                    response = response.replace("```python", "")
-                    response = response.replace("```", "")
-
-                    # Display assistant response in chat message container
-                    with st.chat_message("assistant"):
-
+                # Keep trying until max attempts
+                while attempts < max_attempts and not success:
+                    try:
+    
+                        # Make a request to the OpenAI API
+                        response = make_api_call(full_prompt)
+                        response = response.replace("```python", "")
+                        response = response.replace("```", "")
+    
                         # Execute the script
                         exec(response, exec_globals)
 
@@ -185,25 +184,24 @@ def display_chat(df, df_saved):
                         with st.expander("Python Script"):
                             st.code(response, language='python')
 
-                    # Update previous interactions with the latest response
-                    st.session_state['previous_interactions'] += "\nUser: " + prompt + prompt_addition + "\nGPT: " + response
-                    
-                    # Set success if no errors
-                    success = True
-
-                except Exception as e:
-                    # st.error(f"An error occurred: {e}")
-                    st.write('Retrying')
-                    attempts += 1
-
-            # Requests a different query if gpt keeps giving bad code
-            if not success:
-                response = "Please try a different query."
-                st.write(response)
-
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
+                        # Update previous interactions with the latest response
+                        st.session_state['previous_interactions'] += "\nUser: " + prompt + prompt_addition + "\nGPT: " + response
+                        
+                        # Set success if no errors
+                        success = True
+    
+                    except Exception as e:
+                        # st.error(f"An error occurred: {e}")
+                        attempts += 1
+    
+                # Requests a different query if gpt keeps giving bad code
+                if not success:
+                    response = "Please try a different query."
+                    st.write(response)
+    
+                # Add assistant response to chat history
+                st.session_state.messages.append({"role": "assistant", "content": response})
+    
     # Reset conversation button
     if st.button("Restart Conversation"):
         st.session_state['previous_interactions'] = ""
