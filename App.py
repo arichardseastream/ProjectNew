@@ -92,7 +92,8 @@ primer = """You are a helpful assistant.
             If and only if you are asked to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval.
             Do not plot bars unless you are asked to.
             Do not train any machine learning models like xgboost, logistic regression, etc. under any circumstances.
-            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this."""
+            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this.
+            You are allowed to plot a map if prompted."""
 
 # Additional primer to be ended at the end of the prompt
 prompt_addition = """"""
@@ -145,6 +146,9 @@ def display_chat(df, df_saved):
 
     # Accept user input
     if prompt := st.chat_input("Type your prompt here..."):
+
+        # Remove white space from prompt
+        prompt = prompt.strip()
 
         # Make sure prompt ends with period
         if not (prompt.endswith('.') or prompt.endswith('?') or prompt.endswith('!')):
@@ -256,6 +260,8 @@ def display_user_guide():
     6. Get the model and actual CPR curves by Incentive for when Date was in 2016 and when Date was in 2023. Round Incentive to the nearest
                 .25. Restrict to where Loan Age is between 60 and 84. Plot all four curves on the same graph.
     7. Plot the model vs actual CPR by Loan Age for loans where “Dentist” is in the NaicsDescription. Round Loan Age to the nearest 6.
+    8. Plot the model vs actual CPR by BusinessAge as a bar chart.
+    9. Plot CDR by Orig Market Rate. Round Orig Market Rate to the nearest 0.5.
     """)
 
 # Submit query to gpt
