@@ -80,10 +80,10 @@ primer = """You are a helpful assistant.
             Do not use df.groupby().mean().
             Only run mean() on specific columns, because some columns in df are non-numeric.
             When using groupby(), use a list to refer to multiple columns, do not use a tuple. For example, use `df.groupby('Column1')[['Column2', 'Column3']].mean()`.
+            To round a column to the nearest VALUE, use something like .apply(lambda x: np.round(x / VALUE) * VALUE).
             Refer to matplotlib.ticker as mtick if you use it.
             Do not call st.pyplot without an argument, this will be deprecated soon.
             If you are asked to plot, create a line plot without markers, make sure it includes a title and axis names, and show the plot on the streamlit using st.pyplot.
-            By default all plots should be line plots unless otherwise requested.
             If you plot, make sure the x-axis labels are rotated if they are long, and use ha="right".
             If you plot actuals, plot them in shades of blue. If you plot model, plot them in shades of red.
             If you need to calculate the difference between two dates in months, do this directly using dt.year and dt.month.
@@ -91,10 +91,9 @@ primer = """You are a helpful assistant.
             of SBA 504 historical data, and potentially create plots and other graphics.
             If you want to write a message, make sure to write code that writes the message to the streamlit.
             If and only if you are asked to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval.
-            Do not plot bars unless you are asked to.
+            Do not plot bars unless you are asked to. By default all plots should be line plots unless otherwise requested.
             Do not train any machine learning models like xgboost, logistic regression, etc. under any circumstances.
-            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this.
-            You are allowed to plot a map if prompted."""
+            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this."""
 
 # Additional primer to be ended at the end of the prompt
 prompt_addition = """"""
@@ -240,7 +239,7 @@ def display_user_guide():
     # Put general description of app
     st.write("""This application can be used to query the SBA 504 historical performance data. This data is publically available and 
                 furnished quarterly by the SBA. The data we have is as of September 2023. So far we only have data for originations
-                since 2010. The underlying data is monthly dynamic data. Example queries include asking for historical CDR's and CPR's,
+                since 2010. The underlying data is a random sample of monthly dynamic data. Example queries include asking for historical CDR's and CPR's,
                 restricting to different populations.""")
 
     # Write tips for best query writing
