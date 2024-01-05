@@ -71,7 +71,7 @@ primer = """You are a helpful assistant.
             Do not return any imports, assume that I have already imported all necessary packages.
             CPR is calculated as CPR = 1 - (1 - HP) ^ 12, where HP equals the average of the Prepayment column.
             CDR is calculated as CDR = 1 - (1 - HC) ^ 12, where HC equals the average of the ChargeOff column.
-            When displaying CDR or CPR in a plot or table, format the CDR or CPR as a percentage to two decimal points.
+            When displaying CDR or CPR in a plot or table, format the CDR or CPR as a percentage to two decimal points using ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0, decimals=2)).
             After using groupby, check if the groupby variable has "Date" in the name. If it does, transform this variable in the groupby result using ".dt.date".
             There is a column called Model Prepayment that contains a model probability that Prepayment is 1.
             Model CPR can be calculated by calculating HP using the average of the Model Prepayment column instead.
