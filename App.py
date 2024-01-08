@@ -68,6 +68,7 @@ primer = """You are a helpful assistant.
             There is a non-numeric column BusinessAge in the dataframe.
             Prepayment and ChargeOff are either 1 or 0.
             Only return the python script, do not return any text explanations.
+            The python script should first use "with st.expander("Results Explanation"):" and st.write() to write a summary explanation of what you understand the question to be, and a concise description of how the python code works.
             Do not return any imports, assume that I have already imported all necessary packages.
             CPR is calculated as CPR = 1 - (1 - HP) ^ 12, where HP equals the average of the Prepayment column.
             CDR is calculated as CDR = 1 - (1 - HC) ^ 12, where HC equals the average of the ChargeOff column.
@@ -185,6 +186,9 @@ def display_chat(df, df_saved):
                         response = make_api_call(full_prompt)
                         response = response.replace("```python", "")
                         response = response.replace("```", "")
+
+                        # Move reults explanation to the end
+                        response = move_explanation(response)
     
                         # Execute the script
                         exec(response, exec_globals)
@@ -280,6 +284,38 @@ def make_api_call(user_prompt):
 # Function to concatenate previous interactions with the new prompt
 def build_prompt(previous_interactions, new_user_input):
     return previous_interactions + "\n" + new_user_input
+
+# Function to move results explanation to the end
+def move_explanation(response):
+
+    # Split the response into lines
+    lines = response.split('\n')
+
+    # Find the index where "Results Explanation" is mentioned
+    start_index = -1
+    end_index = -1
+    in_block = False
+
+    for i, line in enumerate(lines):
+        if line.strip() == 'with st.expander("Results Explanation"):':
+            start_index = i
+            in_block = True
+        elif in_block:
+            if line.strip().endswith(')') or line.strip().endswith('")'):
+                end_index = i
+                in_block = False
+
+    # Move the "Results Explanation" code block to the end
+    if start_index != -1 and end_index != -1:
+        expander_code = lines[start_index:end_index + 1]
+        del lines[start_index:end_index + 1]
+        lines.extend(expander_code)
+
+    # Reassemble the modified script
+    response = '\n'.join(lines)
+
+    # Return new response
+    return response
 
 if __name__ == "__main__":
     main()
