@@ -94,8 +94,7 @@ primer = """You are a helpful assistant.
             Refer to matplotlib.ticker as mtick if you use it.
             Do not call st.pyplot without an argument, this will be deprecated soon.
             If you are asked to plot, create a line plot without markers, make sure it includes a title and axis names, and show the plot on the streamlit using st.pyplot.
-            If you plot, make sure the x-axis labels are rotated if they are long, and use ha="right".
-            If you plot and use strings for the x-axis labels, make sure there are not too many labels so they don't overlap.
+            If you plot, make sure the x-axis labels are rotated if they are long, use ha="right", and don't use over 20 labels.
             If you plot actuals, plot them in different shades of blue. If you plot model, plot them in different shades of red.
             Make sure all lines are a different color.
             If you need to calculate the difference between two dates in months, do this directly using dt.year and dt.month.
