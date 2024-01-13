@@ -32,6 +32,12 @@ def load_loan_data(file_path):
     df_saved = df.copy()
     return df, df_saved
 
+# Load loan-level data
+@st.cache_resource
+def load_cpr_model(file_path):
+    model = pd.read_pickle(file_path)
+    return model
+
 # Load dictionary
 @st.cache_resource
 def load_dictionary(file_path):
@@ -65,6 +71,7 @@ primer = """You are a helpful assistant.
             I will ask you for python scripts. 
             These scripts will deal with a dataframe called df. Do not edit the original df dataframe.
             This dataframe has columns Date, LoanID, Prepayment, ChargeOff, and Loan Age, amongst other columns.
+            The dataframe has monthly records for different LoanID's, but keep in mind that it is only a sample of the records, not all monthly records are present.
             There is a non-numeric column BusinessAge in the dataframe.
             Prepayment and ChargeOff are either 1 or 0.
             Only return the python script, do not return any text explanations.
@@ -73,12 +80,14 @@ primer = """You are a helpful assistant.
             CPR is calculated as CPR = 1 - (1 - HP) ^ 12, where HP equals the average of the Prepayment column.
             CDR is calculated as CDR = 1 - (1 - HC) ^ 12, where HC equals the average of the ChargeOff column.
             When displaying CDR or CPR in a plot or table, format the CDR or CPR as a percentage to two decimal points using ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0, decimals=2)).
+            Do not format values as percentages prior to plotting.
             After using groupby, check if the groupby variable has "Date" in the name. If it does, transform this variable in the groupby result using ".dt.date".
             There is a column called Model Prepayment that contains a model probability that Prepayment is 1.
             Model CPR can be calculated by calculating HP using the average of the Model Prepayment column instead.
             Do not use plt.yticks().
             There is a streamlit that already exists, all results will be printed to this streamlit.
             Do not use df.groupby().mean().
+            If you are asked to plot, make sure to plot everything you are asked to plot.
             Only run mean() on specific columns, because some columns in df are non-numeric.
             When using groupby(), use a list to refer to multiple columns, do not use a tuple. For example, use `df.groupby('Column1')[['Column2', 'Column3']].mean()`.
             To round a column to the nearest VALUE, use something like .apply(lambda x: np.round(x / VALUE) * VALUE).
@@ -96,7 +105,10 @@ primer = """You are a helpful assistant.
             If and only if you are asked to plot bars on a rounded x-axis variable, adjust the bar width to be 80% of the rounding interval.
             Do not plot bars unless you are asked to. By default all plots should be line plots unless otherwise requested.
             Do not train any machine learning models like xgboost, logistic regression, etc. under any circumstances.
-            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this."""
+            If you are asked to train a machine learning model, do not do it, instead print to streamlit that you are not allowed to do this.
+            You are allowed to use xgboost models to make predictions.
+            If you are asked to predict prepayments, there is an xgboost model called model. Use model.predict_proba to make predictions.
+            This model uses 'Loan Age', 'GrossApproval', 'Incentive', and 'UnempRate' to predict the probability of prepayment next month."""
 
 # Additional primer to be ended at the end of the prompt
 prompt_addition = """"""
@@ -110,24 +122,26 @@ def main():
     # Load data only once, using the cached function
     df, df_saved = load_loan_data('sbadata_dyn_small.zip')
     dictionary = load_dictionary('7a_504_foia-data-dictionary.xlsx')
+    model = load_cpr_model('cpr_model.pkl')
 
     # Sidebar for navigation using radio buttons
     page = st.sidebar.radio("Menu", ["Chat", "User Guide", "Dictionary"])
 
     # Choose page
     if page == "Chat":
-        display_chat(df, df_saved)  
+        display_chat(df, df_saved, model)  
     elif page == "User Guide":
         display_user_guide()
     elif page == "Dictionary":
         display_dictionary(dictionary)  
 
 # Create chat page
-def display_chat(df, df_saved):
+def display_chat(df, df_saved, model):
 
     # Global variables to pass to exec
     exec_globals = {'df': df, 'pd': pd, 'plt': plt, 'mtick': mtick, 'mpl': mpl, 'st': st, 'np': np, 'xgb': xgb,
-                    'MaxNLocator': MaxNLocator, 'mdates': mdates, 'sns': sns, 'train_test_split': train_test_split}
+                    'MaxNLocator': MaxNLocator, 'mdates': mdates, 'sns': sns, 'train_test_split': train_test_split,
+                    'model': model}
 
     # Initialize 'previous_interactions' in session_state if not present
     if 'previous_interactions' not in st.session_state:
@@ -268,6 +282,7 @@ def display_user_guide():
     7. Plot the model vs actual CPR by Loan Age for loans where “Dentist” is in the NaicsDescription. Round Loan Age to the nearest 6.
     8. Plot the model vs actual CPR by BusinessAge as a bar chart.
     9. Plot CDR by Orig Market Rate. Round Orig Market Rate to the nearest 0.5.
+    10. Use data from the records with the latest Date to predict the CPR for the next month.
     """)
 
 # Submit query to gpt
