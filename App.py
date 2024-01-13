@@ -71,7 +71,7 @@ primer = """You are a helpful assistant.
             I will ask you for python scripts. 
             These scripts will deal with a dataframe called df. Do not edit the original df dataframe.
             This dataframe has columns Date, LoanID, Prepayment, ChargeOff, and Loan Age, amongst other columns.
-            The dataframe has monthly records for different LoanID's, but keep in mind that it is only a sample of the records, not all monthly records are present.
+            The dataframe has monthly records for different LoanID's, but keep in mind that it is only a sample of the records, not all monthly records are present, so you can't use shift.
             There is a non-numeric column BusinessAge in the dataframe.
             Prepayment and ChargeOff are either 1 or 0.
             Only return the python script, do not return any text explanations.
