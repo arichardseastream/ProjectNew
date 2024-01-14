@@ -227,13 +227,26 @@ def display_chat(df, df_saved, model):
     
                 # Add assistant response to chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Reset conversation button
-    if st.button("Restart Conversation"):
-        st.session_state['previous_interactions'] = ""
-        st.session_state.messages = []
-        df = df_saved.copy()
-        st.experimental_rerun()
+
+    if st.session_state.messages:
+
+        # Add an 'Undo Last Interaction' button
+        if st.button("Undo Last Interaction"):
+            if len(st.session_state.messages) >= 2:
+                st.session_state.messages.pop()
+                st.session_state.messages.pop()
+            if st.session_state['previous_interactions']:
+                user_index = st.session_state['previous_interactions'].rfind("\nUser: ")
+                if user_index != -1:
+                    st.session_state['previous_interactions'] = st.session_state['previous_interactions'][:user_index]
+            st.rerun()
+        
+        # Reset conversation button
+        if st.button("Restart Conversation"):
+            st.session_state['previous_interactions'] = ""
+            st.session_state.messages = []
+            df = df_saved.copy()
+            st.rerun()
 
 # Display dictionary page
 def display_dictionary(dictionary):
