@@ -1,6 +1,5 @@
 # Import packages
 import streamlit as st
-import os
 from openai import OpenAI
 import pandas as pd
 import numpy as np
@@ -10,57 +9,10 @@ import matplotlib.ticker as mtick
 from matplotlib.ticker import MaxNLocator
 import matplotlib.dates as mdates
 import seaborn as sns
-import zipfile
-import shutil
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import Utilities as utl
 pd.set_option('display.max_colwidth', 800)
-
-# Load loan-level data
-@st.cache_resource
-def load_loan_data(file_path):
-    extract_dir = 'zip'
-    with zipfile.ZipFile(file_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_dir)
-    pkl_file_name = os.path.basename(file_path).replace('.zip', '.pkl')
-    pkl_file_path = os.path.join(extract_dir, pkl_file_name)
-    df = pd.read_pickle(pkl_file_path)
-    os.remove(pkl_file_path)
-    shutil.rmtree(extract_dir)
-    df['Date'] = pd.to_datetime(df['Date'])
-    df['ApprovalDate'] = pd.to_datetime(df['ApprovalDate'])
-    df_saved = df.copy()
-    return df, df_saved
-
-# Load loan-level data
-@st.cache_resource
-def load_cpr_model(file_path):
-    model = pd.read_pickle(file_path)
-    return model
-
-# Load dictionary
-@st.cache_resource
-def load_dictionary(file_path):
-    dictionary = pd.read_excel(file_path)
-    new_rows = pd.DataFrame({
-        'Field Name': ['LoanID', 'Date', 'MaturityDate', 'Prepayment', 'ChargeOff', 'Loan Age', 'Obs Market Rate', 'Orig Market Rate',
-                       'Incentive', 'Model Prepayment'],
-        'Definition': ['Unique identifier for each loan', 
-                       'Observation month',
-                       'Maturity date interpretted from ApprovalDate and TermInMonths',
-                       '1 if prepaid on this record, 0 otherwise',
-                       '1 if charged off on this record, 0 otherwise',
-                       'Months from ApprovalDate to observation date',
-                       'Average SBA 504 25 Yr Term new origination interest rate on observation date',
-                       'Average SBA 504 25 Yr Term new origination interest rate on ApprovalDate',
-                       'Orig Market Rate - Obs Market Rate',
-                       'Monthly probability of prepayment from xgboost model using Loan Age, Incentive, and GrossApproval'],
-    })
-    dictionary = pd.concat([new_rows, dictionary]).reset_index(drop=True)
-    columns_to_keep = ['Date', 'LoanID', 'ThirdPartyDollars', 'GrossApproval', 'ApprovalDate', 'DeliveryMethod', 'subpgmdesc', 'TermInMonths',
-                   'NaicsDescription', 'ProjectState', 'BusinessType', 'BusinessAge', 'JobsSupported', 'MaturityDate', 'Prepayment', 'ChargeOff',
-                   'Loan Age', 'Obs Market Rate', 'Orig Market Rate', 'Incentive', 'Model Prepayment']
-    return dictionary[dictionary['Field Name'].isin(columns_to_keep)]
 
 # Set up gpt
 openai_api_key = st.secrets["OPENAI_API_KEY"]
@@ -109,9 +61,6 @@ primer = """You are a helpful assistant.
             If you are asked to predict prepayments, there is an xgboost model called model. Use model.predict_proba to make predictions.
             This model uses 'Loan Age', 'GrossApproval', 'Incentive', and 'UnempRate' to predict the probability of prepayment next month."""
 
-# Additional primer to be ended at the end of the prompt
-prompt_addition = """"""
-
 # Create streamlit app and take in queries
 def main():
 
@@ -119,9 +68,9 @@ def main():
     st.title("SBA 504 Data Analysis with GPT")
 
     # Load data only once, using the cached function
-    df, df_saved = load_loan_data('sbadata_dyn_small.zip')
-    dictionary = load_dictionary('7a_504_foia-data-dictionary.xlsx')
-    model = load_cpr_model('cpr_model.pkl')
+    df, df_saved = utl.load_loan_data('sbadata_dyn_small.zip')
+    dictionary = utl.load_dictionary('7a_504_foia-data-dictionary.xlsx')
+    model = utl.load_cpr_model('cpr_model.pkl')
 
     # Sidebar for navigation using radio buttons
     page = st.sidebar.radio("Menu", ["Chat", "User Guide", "Dictionary"])
@@ -181,7 +130,7 @@ def display_chat(df, df_saved, model):
         if prompt:
 
             # Create full prompt
-            full_prompt = build_prompt(st.session_state['previous_interactions'], prompt + prompt_addition)
+            full_prompt = utl.build_prompt(st.session_state['previous_interactions'], prompt)
             
             # Set up counters so app tries request max_attempts, in case gpt returns bad code
             max_attempts = 5
@@ -196,12 +145,12 @@ def display_chat(df, df_saved, model):
                     try:
     
                         # Make a request to the OpenAI API
-                        response = make_api_call(full_prompt)
+                        response = utl.make_api_call(client, primer, full_prompt)
                         response = response.replace("```python", "")
                         response = response.replace("```", "")
 
                         # Move reults explanation to the end
-                        response = move_explanation(response)
+                        response = utl.move_explanation(response)
     
                         # Execute the script
                         exec(response, exec_globals)
@@ -211,13 +160,12 @@ def display_chat(df, df_saved, model):
                             st.code(response, language='python')
 
                         # Update previous interactions with the latest response
-                        st.session_state['previous_interactions'] += "\nUser: " + prompt + prompt_addition + "\nGPT: " + response
+                        st.session_state['previous_interactions'] += "\nUser: " + prompt + "\nGPT: " + response
                         
                         # Set success if no errors
                         success = True
     
                     except Exception as e:
-                        # st.error(f"An error occurred: {e}")
                         attempts += 1
     
                 # Requests a different query if gpt keeps giving bad code
@@ -296,53 +244,6 @@ def display_user_guide():
     9. Plot CDR by Orig Market Rate. Round Orig Market Rate to the nearest 0.5.
     10. Use data from the records with the latest Date to predict the CPR for the next month.
     """)
-
-# Submit query to gpt
-def make_api_call(user_prompt):
-    response = client.chat.completions.create(
-        model="gpt-4-1106-preview",
-        messages=[
-            {"role": "system", "content": primer},
-            {"role": "user", "content": user_prompt}
-        ]
-    )
-    return response.choices[0].message.content
-
-# Function to concatenate previous interactions with the new prompt
-def build_prompt(previous_interactions, new_user_input):
-    return previous_interactions + "\n" + new_user_input
-
-# Function to move results explanation to the end
-def move_explanation(response):
-
-    # Split the response into lines
-    lines = response.split('\n')
-
-    # Find the index where "Results Explanation" is mentioned
-    start_index = -1
-    end_index = -1
-    in_block = False
-
-    for i, line in enumerate(lines):
-        if line.strip() == 'with st.expander("Results Explanation"):':
-            start_index = i
-            in_block = True
-        elif in_block:
-            if line.strip().endswith(')') or line.strip().endswith('")'):
-                end_index = i
-                in_block = False
-
-    # Move the "Results Explanation" code block to the end
-    if start_index != -1 and end_index != -1:
-        expander_code = lines[start_index:end_index + 1]
-        del lines[start_index:end_index + 1]
-        lines.extend(expander_code)
-
-    # Reassemble the modified script
-    response = '\n'.join(lines)
-
-    # Return new response
-    return response
 
 if __name__ == "__main__":
     main()
