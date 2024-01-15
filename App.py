@@ -47,7 +47,6 @@ primer = """You are a helpful assistant.
             Do not call st.pyplot without an argument, this will be deprecated soon.
             If you are asked to plot, create a line plot without markers, make sure it includes a title and axis names, and show the plot on the streamlit using st.pyplot.
             If you plot, make sure the x-axis labels are rotated if they are long, use ha="right", and try very hard to make sure that the labels don't overlap.
-            If the labels are strings and there are over 20 of them, spread out skipping labels to ensure there are at most 17.
             If you plot actuals, plot them in different shades of blue. If you plot model, plot them in different shades of red.
             Make sure all lines are a different color.
             If you need to calculate the difference between two dates in months, do this directly using dt.year and dt.month.
@@ -250,6 +249,7 @@ def display_user_guide():
     3. Be as specific in your request as you can
     4. Remember that the code is dealing with a data table  
     5. If you don't get what you want initially, try resubmitting the query
+    6. If there is a formatting issue in the output, try asking to fix it
 
     **Example Queries**
     1. Plot the CDR by Date
