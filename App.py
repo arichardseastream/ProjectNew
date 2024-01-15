@@ -46,7 +46,7 @@ primer = """You are a helpful assistant.
             Refer to matplotlib.ticker as mtick if you use it.
             Do not call st.pyplot without an argument, this will be deprecated soon.
             If you are asked to plot, create a line plot without markers, make sure it includes a title and axis names, and show the plot on the streamlit using st.pyplot.
-            If you plot, make sure the x-axis labels are rotated if they are long, use ha="right", and don't use over 20 labels.
+            If you plot, make sure the x-axis labels are rotated if they are long, use ha="right", and try very hard to make sure that there aren't too many labels and that they don't overlap.
             If you plot actuals, plot them in different shades of blue. If you plot model, plot them in different shades of red.
             Make sure all lines are a different color.
             If you need to calculate the difference between two dates in months, do this directly using dt.year and dt.month.
@@ -65,7 +65,7 @@ primer = """You are a helpful assistant.
 def main():
 
     # Set streamlit title
-    st.title("SBA 504 Data Analysis with GPT")
+    st.title("DataViewer")
 
     # Load data only once, using the cached function
     df, df_saved = utl.load_loan_data('sbadata_dyn_small.zip')
@@ -73,14 +73,14 @@ def main():
     model = utl.load_cpr_model('cpr_model.pkl')
 
     # Sidebar for navigation using radio buttons
-    page = st.sidebar.radio("Menu", ["Chat", "User Guide", "Dictionary"])
+    page = st.sidebar.radio("Menu", ["Chat", "User Guide", "Data Dictionary"])
 
     # Choose page
     if page == "Chat":
         display_chat(df, df_saved, model)  
     elif page == "User Guide":
         display_user_guide()
-    elif page == "Dictionary":
+    elif page == "Data Dictionary":
         display_dictionary(dictionary)  
 
 # Create chat page
@@ -200,7 +200,7 @@ def display_chat(df, df_saved, model):
 def display_dictionary(dictionary):
 
     # Header
-    st.header("Dictionary")
+    st.header("Data Dictionary")
 
     # Write dictionary
     dictionary_copy = dictionary.copy()
@@ -217,10 +217,29 @@ def display_user_guide():
     st.header("User Guide")
 
     # Put general description of app
-    st.write("""This application can be used to query the SBA 504 historical performance data. This data is publically available and 
-                furnished quarterly by the SBA. The data we have is as of September 2023. So far we only have data for originations
-                since 2010. The underlying data is a random sample of monthly dynamic data. Example queries include asking for historical CDR's and CPR's,
-                restricting to different populations.""")
+    st.write("""
+        <div style="padding: 10px 0px;">
+            Welcome to DataViewer.
+        </div>
+
+        <div style="padding: 10px 0px;">
+            Currently, this application can be used to query the SBA 504 historical performance dataset, which has been enhanced with some macro data. This data 
+            is publicly available and furnished quarterly by the SBA. The data we have is as of September 2023. So far we only have data for originations 
+            since 2010. The underlying data is a random sample of monthly dynamic data.
+        </div>
+
+        <div style="padding: 10px 0px;">
+            The user can submit a prompt that will be fed to OpenAI's GPT-4 model. This model will then return python code that will be run to respond to 
+            the prompt. The response will include a text explanation of how the code works (Results Explanation) and the code itself (Python Script). There will 
+            be a button that can remove the last interaction between the user and the app from both the display and the prompt context (Undo Last Interaction).
+            There will also be a button that can reset the entire conversation (Restart Conversation).
+        </div>
+
+        <div style="padding: 10px 0px;">
+            See below for some tips and example queries.
+        </div>
+    """, unsafe_allow_html=True)
+
 
     # Write tips for best query writing
     st.markdown("""
@@ -228,7 +247,7 @@ def display_user_guide():
     1. Write in full sentances
     2. Use exact variable names and values from the dictionary  
     3. Be as specific in your request as you can
-    4. Remember that the code is dealing with a table  
+    4. Remember that the code is dealing with a data table  
     5. If you don't get what you want initially, try resubmitting the query
 
     **Example Queries**

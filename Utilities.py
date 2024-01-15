@@ -31,24 +31,29 @@ def load_cpr_model(file_path):
 @st.cache_resource
 def load_dictionary(file_path):
     dictionary = pd.read_excel(file_path)
-    new_rows = pd.DataFrame({
-        'Field Name': ['LoanID', 'Date', 'MaturityDate', 'Prepayment', 'ChargeOff', 'Loan Age', 'Obs Market Rate', 'Orig Market Rate',
-                       'Incentive', 'Model Prepayment'],
+    new_begin_rows = pd.DataFrame({
+        'Field Name': ['LoanID', 'Date'],
         'Definition': ['Unique identifier for each loan', 
-                       'Observation month',
-                       'Maturity date interpretted from ApprovalDate and TermInMonths',
+                       'Observation month'],
+    })
+    new_end_rows = pd.DataFrame({
+        'Field Name': ['MaturityDate', 'Prepayment', 'ChargeOff', 'Loan Age', 'Obs Market Rate', 'Orig Market Rate',
+                       'Incentive', 'Model Prepayment', 'UnempRate', 'US10YrTRate'],
+        'Definition': ['Maturity date interpretted from ApprovalDate and TermInMonths',
                        '1 if prepaid on this record, 0 otherwise',
                        '1 if charged off on this record, 0 otherwise',
                        'Months from ApprovalDate to observation date',
                        'Average SBA 504 25 Yr Term new origination interest rate on observation date',
                        'Average SBA 504 25 Yr Term new origination interest rate on ApprovalDate',
                        'Orig Market Rate - Obs Market Rate',
-                       'Monthly probability of prepayment from xgboost model using Loan Age, Incentive, and GrossApproval'],
+                       'Monthly probability of prepayment from xgboost model using Loan Age, Incentive, and GrossApproval',
+                       'US national unemployment rate on Date',
+                       'US 10 Year Treasury yield on Date'],
     })
-    dictionary = pd.concat([new_rows, dictionary]).reset_index(drop=True)
+    dictionary = pd.concat([new_begin_rows, dictionary, new_end_rows]).reset_index(drop=True)
     columns_to_keep = ['Date', 'LoanID', 'ThirdPartyDollars', 'GrossApproval', 'ApprovalDate', 'DeliveryMethod', 'subpgmdesc', 'TermInMonths',
                    'NaicsDescription', 'ProjectState', 'BusinessType', 'BusinessAge', 'JobsSupported', 'MaturityDate', 'Prepayment', 'ChargeOff',
-                   'Loan Age', 'Obs Market Rate', 'Orig Market Rate', 'Incentive', 'Model Prepayment']
+                   'Loan Age', 'Obs Market Rate', 'Orig Market Rate', 'Incentive', 'Model Prepayment', 'UnempRate', 'US10YrTRate']
     return dictionary[dictionary['Field Name'].isin(columns_to_keep)]
 
 # Submit query to gpt
