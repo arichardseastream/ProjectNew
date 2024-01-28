@@ -24,7 +24,7 @@ primer = """You are a helpful assistant.
             These scripts will deal with a dataframe called df. Do not edit the original df dataframe.
             This dataframe has columns Date, LoanID, Prepayment, ChargeOff, and Loan Age, amongst other columns.
             The dataframe has monthly records for different LoanID's, but keep in mind that it is only a sample of the records, not all monthly records are present, so you can't use shift.
-            There is a non-numeric column BusinessAge in the dataframe.
+            The BusinessAge column in the dataframe is not numeric, always treat it as a string.
             Prepayment and ChargeOff are either 1 or 0.
             Only return the python script, do not return any text explanations.
             The python script should first use "with st.expander("Results Explanation"):" and st.write() to write a summary explanation of what you understand the question to be, and a concise description of how the python code works.

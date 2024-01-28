@@ -87,7 +87,7 @@ def move_explanation(response):
             start_index = i
             in_block = True
         elif in_block:
-            if line.strip().endswith(')') or line.strip().endswith('")'):
+            if line.strip().endswith('`)') or line.strip().endswith('")'):
                 end_index = i
                 in_block = False
 
